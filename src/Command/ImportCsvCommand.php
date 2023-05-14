@@ -57,10 +57,14 @@ class ImportCsvCommand extends Command
             return Command::SUCCESS;
         }
 
-        var_dump($this->importer->importCsv($optionName));
-        die;
+        $importer = $this->importer->importCsv($optionName);
 
-        $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
+        if ('error' === $importer['status']) {
+            $io->error("Error: {$importer['message']}");
+            return Command::FAILURE;
+        }
+
+        $io->success($importer['message']);
 
         return Command::SUCCESS;
     }

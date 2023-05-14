@@ -4,6 +4,9 @@ namespace App\Service;
 
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use App\Entity\Product;
+use Doctrine\ORM\EntityManagerInterface as EntityManager;
+use Psr\Log\LoggerInterface as Logger;
 
 class Importer
 {
@@ -13,12 +16,18 @@ class Importer
 
     private string $filePath;
 
-    public function __construct(ParameterBagInterface $parameterBag)
+    private EntityManager $entityManager;
+
+    private Logger $logger;
+
+    public function __construct(ParameterBagInterface $parameterBag, EntityManager $entityManager, Logger $logger)
     {
         $this->finder = new Finder();
         $this->parameterBag = $parameterBag;
         $this->filePath = $this->parameterBag->get('csv_importer_directory');
         $this->finder->files()->in($this->filePath);
+        $this->entityManager = $entityManager;
+        $this->logger = $logger;
     }
 
     private function isFileExist(string $fileName): bool
@@ -44,23 +53,51 @@ class Importer
     public function importCsv(string $fileName): array
     {
         $rows = [];
-        if ($this->isFileExist($fileName)) {
-            $file = $this->finder->name($fileName);
-
-            foreach ($this->finder as $file) { $csv = $file; }
-                if (($handle = fopen($csv->getRealPath(), "r")) !== FALSE) {
-                    $i = 0;
-
-                    while (($data = fgetcsv($handle, null, ";")) !== FALSE) {
-                        $i++;
-                        if ($i == 1) { continue; }
-                        $rows[] = $data;
-                    }
-                    fclose($handle);
-                }
+        if (! $this->isFileExist($fileName)) {
+            return [
+                'status' => 'error',
+                'message' => 'File not exist',
+            ];
         }
 
+        $file = $this->finder->name($fileName);
 
-        return $rows;
+        foreach ($this->finder as $file) { $csv = $file; }
+            if (false !== ($handle = fopen($csv->getRealPath(), "r"))) {
+                $i = 0;
+
+                while (false !== ($data = fgetcsv($handle, null, ";"))) {
+                    $i++;
+                    if (1 === $i) { continue; }
+
+                    $repository = $this->entityManager->getRepository(Product::class);
+
+                    if (! is_int($data[1])) {
+                        $this->logger->info("Importer: The product number {$data[1]} IS NOT integer value!");
+                        continue;
+                    }
+
+                    if ($repository->isProductExists($data[1])) {
+                        $this->logger->info("Importer: The product with name: {$data[0]} and product number: {$data[1]} already exist in the database!");
+                        continue;
+                    }
+
+                    $product = new Product();
+                    $product->setName($data[0]);
+                    $product->setProductNumber($data[1]);
+
+                    $this->entityManager->persist($product);
+                    $this->entityManager->flush();
+
+                    $rows[] = $data;
+                }
+                fclose($handle);
+                unlink($csv->getRealPath());
+            }
+
+        return [
+            'status' => 'success',
+            'message' => 'The products have been imported.'
+        ];
     }
 }
