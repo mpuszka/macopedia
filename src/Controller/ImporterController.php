@@ -15,6 +15,8 @@ class ImporterController extends AbstractController
     #[Route('/importer', name: 'app_importer')]
     public function index(Request $request, SluggerInterface $slugger): Response
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
+
         $form = $this->createForm(ImporterType::class);
         $form->handleRequest($request);
 
