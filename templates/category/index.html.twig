@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    {% include 'partials/navbar/navbar.html.twig' %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <a href="{{ url('app_category_add') }}">
+                    <button type="button" class="btn btn-success mb-3">Add new category</button>
+                </a>
+
+                {% for type, messages in app.flashes %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ type }}">{{ message }}</div>
+                    {% endfor %}
+                {% endfor %}
+
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Category</th>
+                            <th scope="col">Edit</th>
+                            <th scope="col">Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories %}
+                            <tr>
+                                <td>{{ category.getName() }}</td>
+                                <td>
+                                    <a href="{{ url('app_category_edit', {'id': category.id}) }}">
+                                        <button type="button" class="btn btn-info">Edit</button>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ url('app_category_delete', {'id': category.id}) }}">
+                                        <button type="button" class="btn btn-danger">Remove</button>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

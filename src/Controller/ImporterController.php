@@ -9,11 +9,12 @@ use App\Form\ImporterType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Psr\Log\LoggerInterface as Logger;
 
 class ImporterController extends AbstractController
 {
     #[Route('/importer', name: 'app_importer')]
-    public function index(Request $request, SluggerInterface $slugger): Response
+    public function index(Request $request, SluggerInterface $slugger, Logger $logger): Response
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
 
@@ -30,9 +31,19 @@ class ImporterController extends AbstractController
                         $this->getParameter('csv_importer_directory'),
                         $safeFilename . '-' . uniqid() . '.' . $importFile->guessExtension()
                     );
+                    $this->addFlash(
+                        'success',
+                        'File has been importer!'
+                    );
                 } catch (FileException $e) {
-                    // ... handle exception if something happens during file upload
+                    $this->addFlash(
+                        'error',
+                        'Ops! Something went wrong!'
+                    );
+                    $logger->error('Importer: Error occured during the importing the file. Error message: ' . $e->getMessage());
                 }
+
+                return $this->redirectToRoute('app_importer');
             }
         }
 
