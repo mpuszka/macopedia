@@ -72,11 +72,6 @@ class Importer
 
                     $repository = $this->entityManager->getRepository(Product::class);
 
-                    if (! is_int($data[1])) {
-                        $this->logger->info("Importer: The product number {$data[1]} IS NOT integer value!");
-                        continue;
-                    }
-
                     if ($repository->isProductExists($data[1])) {
                         $this->logger->info("Importer: The product with name: {$data[0]} and product number: {$data[1]} already exist in the database!");
                         continue;
