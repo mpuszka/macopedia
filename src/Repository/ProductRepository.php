@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Product;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 /**
  * @extends ServiceEntityRepository<Product>
@@ -39,16 +40,45 @@ class ProductRepository extends ServiceEntityRepository
         }
     }
 
+    public function getCountOfAll(): int
+    {
+        return $this->createQueryBuilder('p')
+            ->select('count(p.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function isProductExists(int $productNumber): bool
     {
         $countOfProducts = $this->createQueryBuilder('p')
-        ->select('count(p.id) as NUM')
-        ->andWhere('p.productNumber = :val')
-        ->setParameter('val', $productNumber)
-        ->getQuery()
-        ->getSingleScalarResult();
+            ->select('count(p.id) as NUM')
+            ->andWhere('p.productNumber = :val')
+            ->setParameter('val', $productNumber)
+            ->getQuery()
+            ->getSingleScalarResult();
 
         return 0 !== $countOfProducts;
+    }
+
+    public function getAllPosts($currentPage = 1)
+    {
+        $query = $this->createQueryBuilder('p')
+            ->getQuery();
+
+        $paginator = $this->paginate($query, $currentPage);
+
+        return $paginator;
+    }
+
+    public function paginate($dql, $page = 1, $limit = 10)
+    {
+        $paginator = new Paginator($dql);
+
+        $paginator->getQuery()
+            ->setFirstResult($limit * ($page - 1))
+            ->setMaxResults($limit);
+
+        return $paginator;
     }
 
 //    /**
