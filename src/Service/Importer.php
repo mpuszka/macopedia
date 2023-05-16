@@ -93,7 +93,7 @@ class Importer
 
         return [
             'status' => 'success',
-            'message' => 'The products have been imported'
+            'message' => 'The products have been imported',
         ];
     }
 }
