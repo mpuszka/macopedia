@@ -20,7 +20,7 @@ class HomeController extends AbstractController
         $pages = ceil($repository->getCountOfAll() / 10);
         $pageParam = $request->query->get('page');
 
-        $page = (! $pageParam || 0 === $pageParam || $pageParam > $pages) ? 1 : $pageParam;
+        $page = (! $pageParam || 0 >= $pageParam || $pageParam > $pages) ? 1 : $pageParam;
 
         return $this->render('home/index.html.twig', [
             'controller_name' => 'HomeController',
