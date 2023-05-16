@@ -25,7 +25,7 @@ class Importer
         $this->finder = new Finder();
         $this->parameterBag = $parameterBag;
         $this->filePath = $this->parameterBag->get('csv_importer_directory');
-        $this->finder->files()->in($this->filePath);
+        $this->finder->files()->in($this->filePath)->name('*.csv');
         $this->entityManager = $entityManager;
         $this->logger = $logger;
     }
@@ -50,6 +50,11 @@ class Importer
         return $rows;
     }
 
+    public function checkMimeContentType(string $path, string $mimeType): bool
+    {
+        return $mimeType === mime_content_type($path);
+    }
+
     public function importCsv(string $fileName): array
     {
         $rows = [];
@@ -63,32 +68,40 @@ class Importer
         $file = $this->finder->name($fileName);
 
         foreach ($this->finder as $file) { $csv = $file; }
-            if (false !== ($handle = fopen($csv->getRealPath(), "r"))) {
-                $i = 0;
 
-                while (false !== ($data = fgetcsv($handle, null, ";"))) {
-                    $i++;
-                    if (1 === $i) { continue; }
+        if (! $this->checkMimeContentType($csv->getRealPath(), 'text/csv')) {
+            return [
+                'status' => 'error',
+                'message' => 'File is not a CSV file',
+            ];
+        }
 
-                    $repository = $this->entityManager->getRepository(Product::class);
+        if (false !== ($handle = fopen($csv->getRealPath(), "r"))) {
+            $i = 0;
 
-                    if ($repository->isProductExists($data[1])) {
-                        $this->logger->info("Importer: The product with name: {$data[0]} and product number: {$data[1]} already exist in the database!");
-                        continue;
-                    }
+            while (false !== ($data = fgetcsv($handle, null, ";"))) {
+                $i++;
+                if (1 === $i) { continue; }
 
-                    $product = new Product();
-                    $product->setName($data[0]);
-                    $product->setProductNumber($data[1]);
+                $repository = $this->entityManager->getRepository(Product::class);
 
-                    $this->entityManager->persist($product);
-                    $this->entityManager->flush();
-
-                    $rows[] = $data;
+                if ($repository->isProductExists($data[1])) {
+                    $this->logger->info("Importer: The product with name: {$data[0]} and product number: {$data[1]} already exist in the database!");
+                    continue;
                 }
-                fclose($handle);
-                unlink($csv->getRealPath());
+
+                $product = new Product();
+                $product->setName($data[0]);
+                $product->setProductNumber($data[1]);
+
+                $this->entityManager->persist($product);
+                $this->entityManager->flush();
+
+                $rows[] = $data;
             }
+            fclose($handle);
+            unlink($csv->getRealPath());
+        }
 
         return [
             'status' => 'success',
