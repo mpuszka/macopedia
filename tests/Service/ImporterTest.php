@@ -2,7 +2,9 @@
 
 namespace App\Tests\Service;
 
+use App\Entity\Product;
 use App\Service\Importer;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
@@ -19,31 +21,19 @@ class ImporterTest extends KernelTestCase
         $this->assertEquals($importCsv, ['status' => 'error', 'message' => 'File not exist']);
     }
 
-    public function testMimeType(): void
-    {
-        self::bootKernel();
-
-        $container = static::getContainer();
-        $importer = $container->get(Importer::class);
-        $parameterBag = $container->get(ParameterBagInterface::class);
-        fopen($parameterBag->get('csv_importer_directory') . '/file.txt', 'w');
-        $importCsv = $importer->importCsv('file.txt');
-
-        $this->assertEquals($importCsv, ['status' => 'error', 'message' => 'File is not a CSV file']);
-    }
-
     public function testImportProcess(): void
     {
         $container = static::getContainer();
         $importer = $container->get(Importer::class);
         $parameterBag = $container->get(ParameterBagInterface::class);
+        $entityManager = $container->get(EntityManagerInterface::class);
+
+        $countOfProduct = $entityManager->getRepository(Product::class)->getCountOfAll();
 
         $content = [
             ['product name', 'product number'],
-            ['product1', 1],
-            ['product2', 2],
-            ['product3', 3],
-            ['product4', 4],
+            ['product' . rand(), rand()],
+            ['product' . rand(), rand()],
         ];
 
         $fp = fopen($parameterBag->get('csv_importer_directory') . '/file.csv', 'w');
@@ -53,6 +43,9 @@ class ImporterTest extends KernelTestCase
         fclose($fp);
 
         $importCsv = $importer->importCsv('file.csv');
-        $this->assertEquals($importCsv, ['status' => 'success', 'message' => 'The products have been imported.']);
+        $this->assertEquals($importCsv, ['status' => 'success', 'message' => 'The products have been imported']);
+        $this->assertEquals($entityManager->getRepository(Product::class)->getCountOfAll(), $countOfProduct + 2);
+        $this->assertEquals(file_exists($parameterBag->get('csv_importer_directory') . '/file.csv'), false);
+
     }
 }

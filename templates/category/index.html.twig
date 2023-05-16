@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
 
+{% block title %}Categories{% endblock %}
+
 {% block body %}
     {% include 'partials/navbar/navbar.html.twig' %}
 
@@ -10,11 +12,7 @@
                     <button type="button" class="btn btn-success mb-3">Add new category</button>
                 </a>
 
-                {% for type, messages in app.flashes %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ type }}">{{ message }}</div>
-                    {% endfor %}
-                {% endfor %}
+                {% include 'partials/flash.html.twig' %}
 
                 <table class="table">
                     <thead>

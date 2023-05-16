@@ -8,8 +8,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Finder\Finder;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Console\Helper\Table;
 use App\Service\Importer;
 
@@ -19,13 +17,10 @@ use App\Service\Importer;
 )]
 class ImportCsvCommand extends Command
 {
-    private ParameterBagInterface $parameterBag;
-
     private Importer $importer;
 
-    public function __construct(ParameterBagInterface $parameterBag, Importer $importer)
+    public function __construct(Importer $importer)
     {
-         $this->parameterBag = $parameterBag;
          $this->importer = $importer;
          parent::__construct();
     }
@@ -42,7 +37,7 @@ class ImportCsvCommand extends Command
         $io = new SymfonyStyle($input, $output);
         if (! $optionName = $input->getOption('name')) {
             if (! $this->importer->areFilesToImport()) {
-                $io->warning('There is not new imported file.');
+                $io->warning('There is no new imported file.');
 
                 return Command::SUCCESS;
             }
@@ -61,6 +56,7 @@ class ImportCsvCommand extends Command
 
         if ('error' === $importer['status']) {
             $io->error("Error: {$importer['message']}");
+
             return Command::FAILURE;
         }
 
