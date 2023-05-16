@@ -8,7 +8,7 @@ use App\Entity\Category;
 
 class AppFixtures extends Fixture
 {
-    private $defaultCategories = [
+    private array $defaultCategories = [
         'Clothing',
         'Mobile phones',
         'Game consoles',

@@ -20,7 +20,7 @@ class ProductController extends AbstractController
         if (! $product) {
             $this->addFlash(
                 'danger',
-                'Product not found!'
+                'The product not found!'
             );
 
             return $this->redirectToRoute('app_home');
@@ -32,12 +32,14 @@ class ProductController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $product = $form->getData();
 
+            $product->setProductNumber(substr($product->getProductNumber(), 0, 7));
+
             $entityManager->persist($product);
             $entityManager->flush();
 
             $this->addFlash(
                 'success',
-                'Product has been edited!'
+                'The product has been edited!'
             );
 
             return $this->redirectToRoute('app_home');

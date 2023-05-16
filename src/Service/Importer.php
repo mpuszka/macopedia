@@ -50,11 +50,6 @@ class Importer
         return $rows;
     }
 
-    public function checkMimeContentType(string $path, string $mimeType): bool
-    {
-        return $mimeType === mime_content_type($path);
-    }
-
     public function importCsv(string $fileName): array
     {
         $rows = [];
@@ -69,13 +64,6 @@ class Importer
 
         foreach ($this->finder as $file) { $csv = $file; }
 
-        if (! $this->checkMimeContentType($csv->getRealPath(), 'text/csv')) {
-            return [
-                'status' => 'error',
-                'message' => 'File is not a CSV file',
-            ];
-        }
-
         if (false !== ($handle = fopen($csv->getRealPath(), "r"))) {
             $i = 0;
 
@@ -86,13 +74,13 @@ class Importer
                 $repository = $this->entityManager->getRepository(Product::class);
 
                 if ($repository->isProductExists($data[1])) {
-                    $this->logger->info("Importer: The product with name: {$data[0]} and product number: {$data[1]} already exist in the database!");
+                    $this->logger->info("Importer: The product with the name: {$data[0]} and product number: {$data[1]} already exists in the database!");
                     continue;
                 }
 
                 $product = new Product();
                 $product->setName($data[0]);
-                $product->setProductNumber($data[1]);
+                $product->setProductNumber(substr($data[1], 0, 7));
 
                 $this->entityManager->persist($product);
                 $this->entityManager->flush();
@@ -105,7 +93,7 @@ class Importer
 
         return [
             'status' => 'success',
-            'message' => 'The products have been imported.'
+            'message' => 'The products have been imported'
         ];
     }
 }

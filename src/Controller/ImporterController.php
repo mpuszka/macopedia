@@ -33,14 +33,14 @@ class ImporterController extends AbstractController
                     );
                     $this->addFlash(
                         'success',
-                        'File has been importer!'
+                        'The file has been imported!'
                     );
                 } catch (FileException $e) {
                     $this->addFlash(
                         'error',
                         'Ops! Something went wrong!'
                     );
-                    $logger->error('Importer: Error occured during the importing the file. Error message: ' . $e->getMessage());
+                    $logger->error('Importer: An error occurred during the importing of the file. Error message: ' . $e->getMessage());
                 }
 
                 return $this->redirectToRoute('app_importer');
@@ -48,7 +48,6 @@ class ImporterController extends AbstractController
         }
 
         return $this->render('importer/index.html.twig', [
-            'controller_name' => 'ImporterController',
             'form' => $form,
         ]);
     }
