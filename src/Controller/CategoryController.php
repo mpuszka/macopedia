@@ -97,16 +97,16 @@ class CategoryController extends AbstractController
         $categoryRepository = $entityManager->getRepository(Category::class);
 
         $category = $categoryRepository->find($id);
-        if ($category->getProductId()->first()) {
-            $this->addFlash(
-                'danger',
-                'Cannot delete this category because it is assigned to the product!'
-            );
-
-            return $this->redirectToRoute('app_category');
-        }
-
         if ($category) {
+            if ($category->getProductId()->first()) {
+                $this->addFlash(
+                    'danger',
+                    'Cannot delete this category because it is assigned to the product!'
+                );
+
+                return $this->redirectToRoute('app_category');
+            }
+
             $entityManager->remove($category);
             $entityManager->flush();
         }
