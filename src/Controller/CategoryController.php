@@ -94,10 +94,19 @@ class CategoryController extends AbstractController
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
 
-        $repository = $entityManager->getRepository(Category::class);
+        $categoryRepository = $entityManager->getRepository(Category::class);
 
-        $category = $repository->find($id);
+        $category = $categoryRepository->find($id);
         if ($category) {
+            if ($category->getProductId()->first()) {
+                $this->addFlash(
+                    'danger',
+                    'Cannot delete this category because it is assigned to the product!'
+                );
+
+                return $this->redirectToRoute('app_category');
+            }
+
             $entityManager->remove($category);
             $entityManager->flush();
         }
